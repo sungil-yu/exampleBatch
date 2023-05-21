@@ -2,12 +2,16 @@ package com.example.examplebatch.part3;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
@@ -75,15 +79,32 @@ public class ChunkProcessingConfig {
     @Bean
     public Step taskBaseStep(){
         return this.stepBuilderFactory.get("taskBaseStep")
-                .tasklet(this.tasklet())
+                .tasklet(this.tasklet(null))
                 .build();
     }
 
-    private Tasklet tasklet() {
+    @Bean
+    @StepScope
+    public Tasklet tasklet(@Value("#{jobParameters[chunkSize]}") String value) {
         return (contribution, chunkContext) -> {
             List<String> items = getItems();
-            log.info("item size {}", items.size());
-            return RepeatStatus.FINISHED;
+            StepExecution stepExecution = contribution.getStepExecution();
+
+            int chunkSize = StringUtils.hasText(value) ? Integer.parseInt(value) : 10;
+
+            int fromIndex = stepExecution.getReadCount();
+            int toIndex = fromIndex + chunkSize;
+
+            if(fromIndex >= items.size()){
+                return RepeatStatus.FINISHED;
+            }
+
+            List<String> subList = items.subList(fromIndex, toIndex);
+            stepExecution.setReadCount(toIndex);
+
+            log.info("task item size: {}", subList.size());
+
+            return RepeatStatus.CONTINUABLE;
         };
     }
 
