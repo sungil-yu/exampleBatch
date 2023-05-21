@@ -8,7 +8,12 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
+import org.springframework.batch.item.database.JdbcPagingItemReader;
+import org.springframework.batch.item.database.Order;
+import org.springframework.batch.item.database.PagingQueryProvider;
 import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
+import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuilder;
+import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
@@ -16,10 +21,13 @@ import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Configuration
@@ -32,6 +40,7 @@ public class ItemReaderConfiguration {
 
     private final DataSource dataSource;
 
+    private static final int chunkSize = 10;
 
     public ItemReaderConfiguration(StepBuilderFactory stepBuilderFactory, JobBuilderFactory jobBuilderFactory, DataSource dataSource) {
         this.stepBuilderFactory = stepBuilderFactory;
@@ -47,7 +56,35 @@ public class ItemReaderConfiguration {
                 .start(this.customItemReaderStep())
                 .next(this.csvFileItemReaderStep())
                 .next(this.jdbcCursorItemReaderStep())
+                .next(this.jdbcPagingItemReaderStep())
                 .build();
+    }
+
+
+
+    private Step jdbcPagingItemReaderStep() throws Exception {
+        return this.stepBuilderFactory.get("jdbcPagingItemReaderStep")
+                .<Person, Person>chunk(chunkSize)
+                .reader(jdbcPagingItemReader())
+                .writer(itemWriter())
+                .build();
+    }
+
+    private JdbcPagingItemReader<Person> jdbcPagingItemReader() throws Exception {
+
+        JdbcPagingItemReader<Person> reader = new JdbcPagingItemReaderBuilder<Person>()
+                .fetchSize(5)
+                .pageSize(5)
+                .dataSource(dataSource)
+                .rowMapper(((rs, rowNum) -> new Person(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4))))
+                .selectClause("id, name, age, address")
+                .fromClause("person")
+                .sortKeys(Map.of("id", Order.ASCENDING))
+                .name("jdbcPagingItemReader")
+                .build();
+
+        reader.afterPropertiesSet();
+        return reader;
     }
 
     private Step jdbcCursorItemReaderStep() {
@@ -76,6 +113,10 @@ public class ItemReaderConfiguration {
                 .writer(itemWriter())
                 .build();
     }
+
+
+
+
 
     private JdbcCursorItemReader<Person> jdbcCursorItemReader() {
         return new JdbcCursorItemReaderBuilder<Person>()
