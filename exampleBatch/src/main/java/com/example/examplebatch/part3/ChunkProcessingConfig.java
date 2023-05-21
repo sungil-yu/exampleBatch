@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -12,9 +13,11 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,14 +43,15 @@ public class ChunkProcessingConfig {
         return this.jobBuilderFactory.get("chunkProcessingJob")
                 .incrementer(new RunIdIncrementer())
                 .start(this.taskBaseStep())
-                .next(this.chunkBaseStep())
+                .next(this.chunkBaseStep(null)) //JobScope를 사용하면 null을 넣어줘도 된다.
                 .build();
     }
 
     @Bean
-    public Step chunkBaseStep(){
+    @JobScope
+    public Step chunkBaseStep(@Value("#{jobParameters[chunkSize]}") String chunkSize){
         return this.stepBuilderFactory.get("chunkBaseStep")
-                .<String, String>chunk(10)
+                .<String, String>chunk(StringUtils.hasText(chunkSize) ? Integer.parseInt(chunkSize) : 10)
                 .reader(itemReader())
                 .processor(itemProcessor())
                 .writer(itemWriter())
