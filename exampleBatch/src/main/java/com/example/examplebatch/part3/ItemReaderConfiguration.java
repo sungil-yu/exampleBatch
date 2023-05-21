@@ -7,6 +7,8 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JdbcCursorItemReader;
+import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
@@ -15,6 +17,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
+import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,10 +30,13 @@ public class ItemReaderConfiguration {
     private final StepBuilderFactory stepBuilderFactory;
     private final JobBuilderFactory jobBuilderFactory;
 
+    private final DataSource dataSource;
 
-    public ItemReaderConfiguration(StepBuilderFactory stepBuilderFactory, JobBuilderFactory jobBuilderFactory) {
+
+    public ItemReaderConfiguration(StepBuilderFactory stepBuilderFactory, JobBuilderFactory jobBuilderFactory, DataSource dataSource) {
         this.stepBuilderFactory = stepBuilderFactory;
         this.jobBuilderFactory = jobBuilderFactory;
+        this.dataSource = dataSource;
     }
 
 
@@ -40,6 +46,15 @@ public class ItemReaderConfiguration {
                 .incrementer(new RunIdIncrementer())
                 .start(this.customItemReaderStep())
                 .next(this.csvFileItemReaderStep())
+                .next(this.jdbcCursorItemReaderStep())
+                .build();
+    }
+
+    private Step jdbcCursorItemReaderStep() {
+        return this.stepBuilderFactory.get("jdbcCursorItemReaderStep")
+                .<Person, Person>chunk(10)
+                .reader(jdbcCursorItemReader())
+                .writer(itemWriter())
                 .build();
     }
 
@@ -59,6 +74,21 @@ public class ItemReaderConfiguration {
                 .<Person, Person>chunk(10)
                 .reader(csvFileItemReader())
                 .writer(itemWriter())
+                .build();
+    }
+
+    private JdbcCursorItemReader<Person> jdbcCursorItemReader() {
+        return new JdbcCursorItemReaderBuilder<Person>()
+                .fetchSize(10)
+                .dataSource(dataSource)
+                .rowMapper((rs, rowNum) -> new Person(
+                        rs.getInt(1),
+                        rs.getString(2),
+                        rs.getString(3),
+                        rs.getString(4)
+                ))
+                .sql("SELECT id, name, age, address FROM person")
+                .name("jdbcCursorItemReader")
                 .build();
     }
 

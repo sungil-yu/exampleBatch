@@ -13,12 +13,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.PlatformTransactionManager;
 
-@Profile("mysql")
 @Configuration
 @Slf4j
 public class SharedConfig {
-
-
 
     @Bean
     public Job shareJob(JobRepository jobRepository, PlatformTransactionManager transactionManager){

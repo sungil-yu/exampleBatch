@@ -20,13 +20,11 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Profile("chunk")
 @Configuration
 @Slf4j
 public class ChunkProcessingConfig {
@@ -47,7 +45,7 @@ public class ChunkProcessingConfig {
         return this.jobBuilderFactory.get("chunkProcessingJob")
                 .incrementer(new RunIdIncrementer())
                 .start(this.taskBaseStep())
-                .next(this.chunkBaseStep(null)) //JobScope를 사용하면 null을 넣어줘도 된다.
+                .next(this.chunkBaseStep(null))
                 .build();
     }
 
