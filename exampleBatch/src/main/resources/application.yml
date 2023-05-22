@@ -10,8 +10,6 @@ spring:
     init:
       mode: always
       data-locations: classpath:person.sql
-# application.yml
-
 logging:
   level:
     org.springframework.batch.item.database.JdbcPagingItemReader: DEBUG
