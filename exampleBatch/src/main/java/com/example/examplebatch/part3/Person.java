@@ -22,9 +22,7 @@ public class Person {
     private String address;
 
     public Person(String name, String age, String address) {
-        this.name = name;
-        this.age = age;
-        this.address = address;
+        this(0, name, age, address);
     }
 
     public Person(int id, String name, String age, String address) {
