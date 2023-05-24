@@ -1,5 +1,6 @@
 package com.example.examplebatch.part3;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
@@ -27,17 +28,12 @@ import java.util.List;
 
 @Configuration
 @Slf4j
+@RequiredArgsConstructor
 public class ChunkProcessingConfig {
 
 
     private final StepBuilderFactory stepBuilderFactory;
     private final JobBuilderFactory jobBuilderFactory;
-
-
-    public ChunkProcessingConfig(StepBuilderFactory stepBuilderFactory, JobBuilderFactory jobBuilderFactory) {
-        this.stepBuilderFactory = stepBuilderFactory;
-        this.jobBuilderFactory = jobBuilderFactory;
-    }
 
 
     @Bean
