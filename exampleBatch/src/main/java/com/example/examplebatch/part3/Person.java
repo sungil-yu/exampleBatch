@@ -33,4 +33,12 @@ public class Person {
     }
 
 
+    public boolean isNotEmptyName() {
+        return name != null && !name.isEmpty();
+    }
+
+    public Person unknownName(String unknown) {
+        this.name = unknown;
+        return this;
+    }
 }

@@ -90,7 +90,7 @@ public class HomeworkConfig {
         };
 
         CompositeItemProcessor<Person,Person> itemProcessor = new CompositeItemProcessorBuilder<Person, Person>()
-                .delegates(validationProcessor, duplicationProcessor)
+                .delegates(new PersonValidationRetryProcessor(),validationProcessor, duplicationProcessor)
                 .build();
 
         itemProcessor.afterPropertiesSet();
