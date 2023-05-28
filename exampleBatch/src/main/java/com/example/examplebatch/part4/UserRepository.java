@@ -8,6 +8,6 @@ import java.util.List;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    List<User> findAllByUpdatedDate(LocalDate now);
+    Collection<User> findAllByUpdatedDate(LocalDate now);
 
 }

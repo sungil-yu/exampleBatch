@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SaveUserTasklet implements Tasklet {
 
-    private final int SIZE = 100;
+    private final int SIZE = 10000;
     private final UserRepository userRepository;
 
     @Override
@@ -37,7 +37,7 @@ public class SaveUserTasklet implements Tasklet {
             users.add(User.builder()
                     .orders(Collections.singletonList(Orders.builder()
                             .amount(1_000)
-                            .createdDate(LocalDate.of(2020, 11, 1))
+                            .createdDate(LocalDate.of(2023, 5, 1))
                             .build()))
                     .name("test username" + i)
                     .build());
@@ -47,7 +47,7 @@ public class SaveUserTasklet implements Tasklet {
             users.add(User.builder()
                     .orders(Collections.singletonList(Orders.builder()
                             .amount(200_000)
-                            .createdDate(LocalDate.of(2020, 11, 2))
+                            .createdDate(LocalDate.of(2023, 5, 2))
                             .build()))
                     .name("test username" + i)
                     .build());
@@ -57,7 +57,7 @@ public class SaveUserTasklet implements Tasklet {
             users.add(User.builder()
                             .orders(Collections.singletonList(Orders.builder()
                                     .amount(300_000)
-                                    .createdDate(LocalDate.of(2020, 11, 3))
+                                    .createdDate(LocalDate.of(2023, 5, 3))
                                     .build()))
                     .name("test username" + i)
                     .build());
@@ -67,7 +67,7 @@ public class SaveUserTasklet implements Tasklet {
             users.add(User.builder()
                             .orders(Collections.singletonList(Orders.builder()
                                     .amount(500_000)
-                                    .createdDate(LocalDate.of(2020, 11, 4))
+                                    .createdDate(LocalDate.of(2023, 5, 4))
                                     .build()))
                     .name("test username" + i)
                     .build());
@@ -77,7 +77,7 @@ public class SaveUserTasklet implements Tasklet {
             users.add(User.builder()
                     .orders(Collections.singletonList(Orders.builder()
                             .amount(1_000_000)
-                            .createdDate(LocalDate.of(2020, 12, 5))
+                            .createdDate(LocalDate.of(2023, 5, 5))
                             .build()))
                     .name("test username" + i)
                     .build());

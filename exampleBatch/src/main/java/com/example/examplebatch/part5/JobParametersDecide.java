@@ -19,7 +19,6 @@ public class JobParametersDecide implements JobExecutionDecider {
 
         String key = jobExecution.getJobParameters().getString(this.key);
 
-        System.out.println("---------------------key" + key);
         if (!StringUtils.hasText(key)){
             return FlowExecutionStatus.COMPLETED;
         }

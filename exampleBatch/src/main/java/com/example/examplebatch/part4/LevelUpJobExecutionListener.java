@@ -6,6 +6,7 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -21,7 +22,8 @@ public class LevelUpJobExecutionListener implements JobExecutionListener {
     @Override
     public void afterJob(JobExecution jobExecution) {
 
-        List<User> users = userRepository.findAllByUpdatedDate(LocalDate.now());
+
+        Collection<User> users = userRepository.findAllByUpdatedDate(LocalDate.now());
 
         long time = jobExecution.getEndTime().getTime() - jobExecution.getStartTime().getTime();
 

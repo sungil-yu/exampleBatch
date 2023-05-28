@@ -25,7 +25,7 @@ public class User {
     @Enumerated(javax.persistence.EnumType.STRING)
     private Level level = Level.NORMAL;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private List<Orders> orders = new ArrayList<>();
 
