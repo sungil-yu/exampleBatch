@@ -20,11 +20,14 @@ import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.batch.item.support.CompositeItemProcessor;
+import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
 import org.springframework.batch.item.support.builder.CompositeItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.StringUtils;
 
 import javax.sql.DataSource;
 import java.util.Map;
@@ -58,10 +61,41 @@ public class HomeworkConfig {
         return this.stepBuilderFactory.get("homeworkStep")
                 .<Person, Person>chunk(10)
                 .reader(csvFileReader())
-                .processor(csvFileProcessor(Boolean.parseBoolean(allowDuplicate)))
+                .processor(itemProcessor(Boolean.parseBoolean(allowDuplicate)))
                 .writer(csvFileWriter())
                 .listener(new SavePersonListener.SavePersonStepExecutionListener())
+                .faultTolerant()
+                .skip(NotFoundNameException.class)
+                .skipLimit(2)
                 .build();
+
+    }
+
+    private ItemProcessor<? super Person, ? extends Person> itemProcessor(Boolean allowDuplicate) throws Exception {
+
+        ItemProcessor<Person, Person> duplicationProcessor = allowDuplicate ? item -> item : item -> {
+            if (persons.containsKey(item.getName())) {
+                return null;
+            }
+            persons.put(item.getName(), item);
+            return item;
+        };
+
+
+        ItemProcessor<Person, Person> validationProcessor = item -> {
+            if (!StringUtils.hasText(item.getName())) {
+                throw new NotFoundNameException();
+            }
+            return item;
+        };
+
+        CompositeItemProcessor<Person,Person> itemProcessor = new CompositeItemProcessorBuilder<Person, Person>()
+                .delegates(validationProcessor, duplicationProcessor)
+                .build();
+
+        itemProcessor.afterPropertiesSet();
+
+        return itemProcessor;
 
     }
 
