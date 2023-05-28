@@ -1,14 +1,14 @@
 package com.example.examplebatch.part4;
 
+import com.example.examplebatch.part5.Orders;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -25,19 +25,25 @@ public class User {
     @Enumerated(javax.persistence.EnumType.STRING)
     private Level level = Level.NORMAL;
 
-    private int totalAmount;
+    @OneToMany(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "user_id")
+    private List<Orders> orders = new ArrayList<>();
 
     private LocalDate updatedDate;
 
     @Builder
-    public User(String name, int totalAmount) {
+    public User(String name, List<Orders> orders) {
         this.name = name;
-        this.totalAmount = totalAmount;
+        this.orders = orders;
     }
 
     public void levelUp() {
         this.level = Level.getNextLevel(this.getTotalAmount());
         this.updatedDate = LocalDate.now();
+    }
+
+    private int getTotalAmount() {
+        return orders.stream().mapToInt(Orders::getAmount).sum();
     }
 
     public boolean availableLevelUp() {
