@@ -22,7 +22,6 @@ import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.support.builder.CompositeItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
@@ -47,6 +46,8 @@ public class HomeworkConfig {
         return this.jobBuilderFactory.get("homeworkJob")
                 .incrementer(new RunIdIncrementer())
                 .start(this.homeworkStep(null))
+                .listener(new SavePersonListener.SavePersonJobExecutionListener())
+                .listener(new SavePersonListener.SavePersonAnnotationJobExecutionListener())
                 .build();
     }
 
@@ -59,6 +60,7 @@ public class HomeworkConfig {
                 .reader(csvFileReader())
                 .processor(csvFileProcessor(Boolean.parseBoolean(allowDuplicate)))
                 .writer(csvFileWriter())
+                .listener(new SavePersonListener.SavePersonStepExecutionListener())
                 .build();
 
     }
