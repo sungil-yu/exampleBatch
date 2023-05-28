@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -21,14 +22,12 @@ import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.support.builder.CompositeItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
 import javax.sql.DataSource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -53,12 +52,12 @@ public class HomeworkConfig {
 
     @Bean
     @JobScope
-    public Step homeworkStep(@Value("#{jobParameters[allow_duplicate]}") Boolean allowDuplicate) throws Exception{
+    public Step homeworkStep(@Value("#{jobParameters[allow_duplicate]}") String allowDuplicate) throws Exception{
 
         return this.stepBuilderFactory.get("homeworkStep")
                 .<Person, Person>chunk(10)
                 .reader(csvFileReader())
-                .processor(csvFileProcessor(allowDuplicate))
+                .processor(csvFileProcessor(Boolean.parseBoolean(allowDuplicate)))
                 .writer(csvFileWriter())
                 .build();
 
@@ -71,7 +70,7 @@ public class HomeworkConfig {
     }
 
     private ItemWriter<? super Person> logItemWriter() {
-        return items -> items.stream().map(Person::getName).forEach(id -> log.info("PERSON.ID : {}", id));
+        return items -> items.stream().map(Person::getName).forEach(id -> log.info("PERSON.NAME : {}", id));
     }
 
     private ItemWriter<? super Person> jdbcBatchItemWriter() {
