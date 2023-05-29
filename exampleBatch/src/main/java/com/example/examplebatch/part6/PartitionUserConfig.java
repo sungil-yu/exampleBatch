@@ -66,7 +66,6 @@ public class PartitionUserConfig {
         return this.jobBuilderFactory.get(JOB_NAME)
                 .incrementer(new RunIdIncrementer())
                 .start(this.saveUserStep())
-//                .next(this.userLevelUpStep())
                 .next(this.userLevelUpStepManager())
                 .listener(new LevelUpJobExecutionListener(userRepository))
                 .next(new JobParametersDecide("date"))
@@ -169,6 +168,16 @@ public class PartitionUserConfig {
                 .build();
     }
 
+    private PartitionHandler taskExecutorPartitionHandler() throws Exception {
+        TaskExecutorPartitionHandler handler = new TaskExecutorPartitionHandler();
+
+        handler.setTaskExecutor(this.taskExecutor);
+        handler.setStep(userLevelUpStep());
+
+        handler.setGridSize(8);
+        return handler;
+    }
+
     private AsyncItemProcessor<User,User> itemProcessor() {
         ItemProcessor<User, User> itemProcessor = user -> {
             if (user.availableLevelUp()){
@@ -183,15 +192,6 @@ public class PartitionUserConfig {
         return asyncItemProcessor;
     }
 
-    private PartitionHandler taskExecutorPartitionHandler() throws Exception {
-        TaskExecutorPartitionHandler handler = new TaskExecutorPartitionHandler();
-
-        handler.setTaskExecutor(this.taskExecutor);
-        handler.setStep(userLevelUpStep());
-
-        handler.setGridSize(8);
-        return handler;
-    }
 
 
     private AsyncItemWriter<User> itemWriter() {
@@ -211,7 +211,6 @@ public class PartitionUserConfig {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("minId", minId);
         parameters.put("maxId", maxId);
-
 
         JpaPagingItemReader<User> itemReader = new JpaPagingItemReaderBuilder<User>()
                 .queryString("select u from User u where u.id between :minId and :maxId")
