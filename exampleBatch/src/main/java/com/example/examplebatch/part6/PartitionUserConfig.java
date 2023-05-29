@@ -17,6 +17,8 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.partition.PartitionHandler;
 import org.springframework.batch.core.partition.support.TaskExecutorPartitionHandler;
+import org.springframework.batch.integration.async.AsyncItemProcessor;
+import org.springframework.batch.integration.async.AsyncItemWriter;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
@@ -42,6 +44,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 @Configuration
 @Slf4j
@@ -150,7 +153,7 @@ public class PartitionUserConfig {
     @Bean(JOB_NAME + "_userLevelUpStep")
     public Step userLevelUpStep() throws Exception {
         return stepBuilderFactory.get(JOB_NAME + "_userLevelUpStep")
-                .<User, User>chunk(CHUNKSIZE)
+                .<User, Future<User>>chunk(CHUNKSIZE)
                 .reader(itemReader(null, null))
                 .processor(itemProcessor())
                 .writer(itemWriter())
@@ -166,6 +169,20 @@ public class PartitionUserConfig {
                 .build();
     }
 
+    private AsyncItemProcessor<User,User> itemProcessor() {
+        ItemProcessor<User, User> itemProcessor = user -> {
+            if (user.availableLevelUp()){
+                return user;
+            }
+            return null;
+        };
+
+        AsyncItemProcessor<User, User> asyncItemProcessor = new AsyncItemProcessor<>();
+        asyncItemProcessor.setDelegate(itemProcessor);
+        asyncItemProcessor.setTaskExecutor(this.taskExecutor);
+        return asyncItemProcessor;
+    }
+
     private PartitionHandler taskExecutorPartitionHandler() throws Exception {
         TaskExecutorPartitionHandler handler = new TaskExecutorPartitionHandler();
 
@@ -177,21 +194,15 @@ public class PartitionUserConfig {
     }
 
 
-    private ItemWriter<? super User> itemWriter() {
-        return users -> users.forEach(User::levelUp);
-    }
+    private AsyncItemWriter<User> itemWriter() {
 
-    private ItemProcessor<? super User, ? extends User> itemProcessor() {
-        return user -> {
-            if (user.availableLevelUp()){
-                return user;
-            }
+        ItemWriter<User> itemWriter =  users -> users.forEach(User::levelUp);
+        AsyncItemWriter<User> asyncItemWriter = new AsyncItemWriter<>();
+        asyncItemWriter.setDelegate(itemWriter);
 
-            return null;
-        };
+        return asyncItemWriter;
 
     }
-
 
     @Bean
     @StepScope
