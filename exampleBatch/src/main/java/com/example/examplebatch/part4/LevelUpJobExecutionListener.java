@@ -21,8 +21,6 @@ public class LevelUpJobExecutionListener implements JobExecutionListener {
 
     @Override
     public void afterJob(JobExecution jobExecution) {
-
-
         Collection<User> users = userRepository.findAllByUpdatedDate(LocalDate.now());
 
         long time = jobExecution.getEndTime().getTime() - jobExecution.getStartTime().getTime();
